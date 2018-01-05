@@ -188,12 +188,17 @@ def get_list_id(list_name,db):
 	my_log('get list_id:'+list_name)
 	sql = 'select id from list where name="'+list_name+'"'
 	return get_info(sql,id,db)
-def get_bible_section_id(volume_id,detail,db):
-	#my_log('get detail_id:'+str(detail['chapter'])+':'+str(detail['section'])+':'+detail['version'])
-	sql = 'select id from bible where content="'+detail['content']+'" and volume_id='+str(volume_id)+' and chapter_num='+str(detail['chapter'])+' and section_num='+str(detail['section'])+' and version="'+detail['version']+'"'
+
+def get_chapter_id(name,list_id,volume_id,db):
+	sql = 'select id from chapter where name="'+name+'" and list_id='+str(list_id)+' and volume_id='+str(volume_id);
 	return get_info(sql,id,db)
-def get_resource_detail_id(volume_id,list_id,chapter_name,db):
-	sql = 'select id from resource where volume_id='+str(volume_id)+' and list_id='+str(list_id)+' and chapter="'+chapter_name+'"'
+def get_resource_detail_id(chapter_id,db):
+	#查经资料的一个chapter就只有一个detail
+	sql = 'select id from detail where chapter_id='+str(chapter_id);
+	return get_info(sql,id,db)
+def get_bible_section_id(chapter_id,detail,db):
+	#my_log('get detail_id:'+str(detail['chapter'])+':'+str(detail['section'])+':'+detail['version'])
+	sql = 'select id from detail where chapter_id='+str(chapter_id)+' and content="'+detail['content']+'" and chapter_num='+str(detail['chapter'])+' and section_num='+str(detail['section'])+' and version="'+detail['version']+'"'
 	return get_info(sql,id,db)
 def get_chapter_and_section(url,is_print=False):
 	selector = get_clear_html_selector(url)
