@@ -99,10 +99,36 @@ def get_page_total_detail(url):
 	detail = selector.xpath('//body//p')
 	ret = ''
 	for item in detail:
-		tmp = item.xpath('string(.)').replace('\r','').replace('\n','').replace('\t','').replace(' ','').replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
-		if tmp and not tmp.startswith(u'返回'):
-			ret+='<br>'+tmp
+		tmp = item.xpath('string(.)').replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+		#tmp = item.xpath('string(.)').replace('\r','').replace('\n','').replace('\t','').replace(' ','').replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+		if tmp and not tmp.startswith(u'返回') and not re.match('.*返回.*',tmp):
+			ret+='&lt;br&gt;'+tmp
 	return ret
+def get_chapters_from_type_3(info):
+	tp = re.match('^(\d+)\S(\d+)\S\S+$',info)
+	ret = []
+	chapter = tp.group(1)
+	section = tp.group(2)
+	versions = [u'和合本',u'修订本',u'新译本',u'吕振中',u'中译本',u'当代一',u'当代二',u'现代本',u'文理本',u'普通话',u'思高本',u'恢复本']
+	count_versions = len(versions)
+	i = 0
+	for version in versions:
+		i += 1
+		if i == count_versions:
+			next_version = False
+		else:
+			next_version = versions[i]
+		content_start = info.find(version)+3
+		if next_version:
+			content = info[info.find(version)+4:info.find(next_version)-1]
+		else:
+			content = info[info.find(version)+4:]
+
+		cur_chapter = {'chapter':chapter,'section':section,'version':version,'content':content}
+		ret.append(cur_chapter)
+	return ret
+
+
 def get_bible_translation_detail(url):
 	my_log('now to get bible detail....'+url)
 	# get detail
@@ -130,6 +156,12 @@ def get_bible_translation_detail(url):
 				if is_new_section_2:
 					cur_chapter = is_new_section_2.group(1)
 					cur_section = is_new_section_2.group(2)
+				else:
+					is_new_section_3 = re.match('^(\d+)\S(\d+)\S\S+$',info)
+					if is_new_section_3:
+						chapters = get_chapters_from_type_3(info)
+						for eachchapter in chapters:
+							ret.append(eachchapter)
 			continue
 		cur_version = info[1:info.find(')')]
 		cur_content = info[info.find(')')+1:]
@@ -234,3 +266,5 @@ def get_all_chapter_section_struct():
 				if list_name.endswith(u'圣经译本'):
 					for chapter in item['list_content']:
 						cur_chapter = get_chapter_and_section(host+chapter['chapter_url'],True)
+
+
